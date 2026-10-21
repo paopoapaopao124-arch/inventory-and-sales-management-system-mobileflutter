@@ -75,14 +75,14 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   int get cartCount =>
       cart.values.fold(0, (sum, quantity) => sum + quantity);
 
-  void addToCart(Product product) {
+  int addToCart(Product product) {
     if (product.stock <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('This product is out of stock.'),
         ),
       );
-      return;
+      return cartCount;
     }
 
     final currentQuantity = cart[product.id] ?? 0;
@@ -92,7 +92,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           content: Text('You have reached the available stock.'),
         ),
       );
-      return;
+      return cartCount;
     }
 
     setState(() {
@@ -105,6 +105,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         duration: const Duration(milliseconds: 900),
       ),
     );
+
+    return cartCount;
   }
 
   void removeFromCart(Product product) {
@@ -353,6 +355,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                     MaterialPageRoute(
                       builder: (_) => ProductDetailsPage(
                         product: product,
+                        initialCartCount: cartCount,
                         onAddToCart: () => addToCart(product),
                         onOpenCart: () => setState(() => selectedIndex = 1),
                       ),

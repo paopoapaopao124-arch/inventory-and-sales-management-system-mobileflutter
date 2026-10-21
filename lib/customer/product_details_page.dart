@@ -3,17 +3,46 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../shared/app_theme.dart';
 
-class ProductDetailsPage extends StatelessWidget {
+class ProductDetailsPage extends StatefulWidget {
   final Product product;
-  final VoidCallback onAddToCart;
+  final int initialCartCount;
+  final int Function() onAddToCart;
   final VoidCallback? onOpenCart;
 
   const ProductDetailsPage({
     super.key,
     required this.product,
+    required this.initialCartCount,
     required this.onAddToCart,
     this.onOpenCart,
   });
+
+  @override
+  State<ProductDetailsPage> createState() => _ProductDetailsPageState();
+}
+
+class _ProductDetailsPageState extends State<ProductDetailsPage> {
+  late int _cartCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartCount = widget.initialCartCount;
+  }
+
+  void _handleAddToCart() {
+    final nextCount = widget.onAddToCart();
+    setState(() {
+      _cartCount = nextCount;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.product.name} added to cart.'),
+        duration: const Duration(milliseconds: 900),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,20 +56,24 @@ class ProductDetailsPage extends StatelessWidget {
           tooltip: 'Back to products',
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(product.name),
+        title: Text(widget.product.name),
         actions: [
-          IconButton(
-            tooltip: 'Open cart',
-            icon: const Icon(Icons.shopping_cart_outlined),
-            onPressed: () {
-              if (onOpenCart != null) {
-                onOpenCart!();
-                Navigator.of(context).pop();
-                return;
-              }
+          Badge(
+            label: Text('$_cartCount'),
+            isLabelVisible: _cartCount > 0,
+            child: IconButton(
+              tooltip: 'Open cart',
+              icon: const Icon(Icons.shopping_cart_outlined),
+              onPressed: () {
+                if (widget.onOpenCart != null) {
+                  widget.onOpenCart!();
+                  Navigator.of(context).pop();
+                  return;
+                }
 
-              onAddToCart();
-            },
+                _handleAddToCart();
+              },
+            ),
           ),
         ],
       ),
@@ -51,9 +84,9 @@ class ProductDetailsPage extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: product.imageUrl.isNotEmpty
+              child: widget.product.imageUrl.isNotEmpty
                   ? Image.network(
-                      product.imageUrl,
+                      widget.product.imageUrl,
                       width: double.infinity,
                       height: 280,
                       fit: BoxFit.cover,
@@ -64,7 +97,7 @@ class ProductDetailsPage extends StatelessWidget {
                           color: AppTheme.card,
                           child: Center(
                             child: Text(
-                              product.emoji,
+                              widget.product.emoji,
                               style: const TextStyle(fontSize: 72),
                             ),
                           ),
@@ -77,7 +110,7 @@ class ProductDetailsPage extends StatelessWidget {
                       color: AppTheme.card,
                       child: Center(
                         child: Text(
-                          product.emoji,
+                          widget.product.emoji,
                           style: const TextStyle(fontSize: 72),
                         ),
                       ),
@@ -85,7 +118,7 @@ class ProductDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             Text(
-              product.name,
+              widget.product.name,
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -93,7 +126,7 @@ class ProductDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '₱${product.price.toStringAsFixed(2)}',
+              '₱${widget.product.price.toStringAsFixed(2)}',
               style: const TextStyle(
                 color: AppTheme.emerald,
                 fontSize: 24,
@@ -103,9 +136,9 @@ class ProductDetailsPage extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
-                _InfoChip(label: 'Category', value: product.category.isNotEmpty ? product.category : 'General'),
+                _InfoChip(label: 'Category', value: widget.product.category.isNotEmpty ? widget.product.category : 'General'),
                 const SizedBox(width: 8),
-                _InfoChip(label: 'Brand', value: product.brand.isNotEmpty ? product.brand : 'N/A'),
+                _InfoChip(label: 'Brand', value: widget.product.brand.isNotEmpty ? widget.product.brand : 'N/A'),
               ],
             ),
             const SizedBox(height: 14),
@@ -120,7 +153,7 @@ class ProductDetailsPage extends StatelessWidget {
                   const Icon(Icons.inventory_2_outlined, color: AppTheme.emerald),
                   const SizedBox(width: 10),
                   Text(
-                    product.stock > 0 ? 'In stock: ${product.stock}' : 'Out of stock',
+                    widget.product.stock > 0 ? 'In stock: ${widget.product.stock}' : 'Out of stock',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -130,15 +163,7 @@ class ProductDetailsPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  onAddToCart();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${product.name} added to cart.'),
-                      duration: const Duration(milliseconds: 900),
-                    ),
-                  );
-                },
+                onPressed: _handleAddToCart,
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Add to Cart'),
               ),
@@ -153,8 +178,8 @@ class ProductDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              product.description.isNotEmpty
-                  ? product.description
+              widget.product.description.isNotEmpty
+                  ? widget.product.description
                   : 'No description available for this product.',
               style: const TextStyle(
                 color: AppTheme.muted,
