@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+
+import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 import '../shared/widgets.dart';
 import 'role_selection_page.dart';
@@ -23,9 +25,11 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void login() {
-    if (usernameController.text.trim().isEmpty ||
-        passwordController.text.isEmpty) {
+  Future<void> login() async {
+    final email = usernameController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter your username and password.'),
@@ -34,13 +38,26 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Prototype only: connect real authentication before deployment.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const RoleSelectionPage(),
-      ),
-    );
+    try {
+      await ApiService.login(email: email, password: password);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const RoleSelectionPage(),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
   }
 
   @override
