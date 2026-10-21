@@ -135,6 +135,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updateCustomerProfile({
     required String name,
+    required String email,
     required String phone,
     required String barangay,
     required String streetNo,
@@ -144,6 +145,7 @@ class ApiService {
       headers: _headers(),
       body: jsonEncode({
         'name': name,
+        'email': email,
         'phone': phone,
         'barangay': barangay,
         'street_no': streetNo,

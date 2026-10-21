@@ -6,11 +6,13 @@ import '../shared/app_theme.dart';
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
   final VoidCallback onAddToCart;
+  final VoidCallback? onOpenCart;
 
   const ProductDetailsPage({
     super.key,
     required this.product,
     required this.onAddToCart,
+    this.onOpenCart,
   });
 
   @override
@@ -26,6 +28,21 @@ class ProductDetailsPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(product.name),
+        actions: [
+          IconButton(
+            tooltip: 'Open cart',
+            icon: const Icon(Icons.shopping_cart_outlined),
+            onPressed: () {
+              if (onOpenCart != null) {
+                onOpenCart!();
+                Navigator.of(context).pop();
+                return;
+              }
+
+              onAddToCart();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),

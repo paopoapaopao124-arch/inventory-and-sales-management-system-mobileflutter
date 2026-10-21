@@ -13,11 +13,36 @@ class CustomerProfilePage extends StatefulWidget {
 class _CustomerProfilePageState extends State<CustomerProfilePage> {
   late Future<Map<String, dynamic>> _profileFuture;
 
+  static const List<String> _trinidadBarangays = [
+    'Banlasan',
+    'Bongbong',
+    'Catoogan',
+    'Guinobatan',
+    'Hinlayagan Ilaud',
+    'Hinlayagan Sur',
+    'Ipil',
+    'Kinan-oan',
+    'La Union',
+    'La Victoria',
+    'Mabuhay Cabigohan',
+    'Mahagbu',
+    'Manuel M. Roxas',
+    'Poblacion (Center)',
+    'San Isidro',
+    'San Vicente',
+    'Santo Tomas',
+    'Soom',
+    'Tagum Norte',
+    'Tagum Sur',
+  ];
+
   final TextEditingController _currentPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _municipalityController = TextEditingController(text: 'Trinidad');
   final TextEditingController _barangayController = TextEditingController();
   final TextEditingController _streetNoController = TextEditingController();
 
@@ -47,11 +72,12 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
     final barangay = _barangayController.text.trim();
     final streetNo = _streetNoController.text.trim();
 
-    if (name.isEmpty || phone.isEmpty || barangay.isEmpty || streetNo.isEmpty) {
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || barangay.isEmpty || streetNo.isEmpty) {
       _showSnackBarMessage('Please complete all profile fields.');
       return;
     }
@@ -59,6 +85,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     try {
       await ApiService.updateCustomerProfile(
         name: name,
+        email: email,
         phone: phone,
         barangay: barangay,
         streetNo: streetNo,
@@ -153,8 +180,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           builder: (context, snapshot) {
             final profile = snapshot.data ?? <String, dynamic>{};
             _nameController.text = (profile['name'] ?? '').toString();
+            _emailController.text = (profile['email'] ?? '').toString();
             _phoneController.text = (profile['phone'] ?? '').toString();
-            _barangayController.text = (profile['barangay'] ?? '').toString();
+            _municipalityController.text = (profile['municipality'] ?? 'Trinidad').toString();
+            _barangayController.text = (profile['barangay'] ?? 'Poblacion (Center)').toString();
             _streetNoController.text = (profile['street_no'] ?? '').toString();
 
             return AlertDialog(
@@ -175,6 +204,14 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email Address',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
@@ -183,10 +220,33 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
-                      controller: _barangayController,
+                      controller: _municipalityController,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Municipality',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _trinidadBarangays.contains(_barangayController.text)
+                          ? _barangayController.text
+                          : 'Poblacion (Center)',
                       decoration: const InputDecoration(
                         labelText: 'Barangay',
                       ),
+                      items: _trinidadBarangays
+                          .map(
+                            (barangay) => DropdownMenuItem(
+                              value: barangay,
+                              child: Text(barangay),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          _barangayController.text = value;
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -397,7 +457,9 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
+    _municipalityController.dispose();
     _barangayController.dispose();
     _streetNoController.dispose();
     super.dispose();

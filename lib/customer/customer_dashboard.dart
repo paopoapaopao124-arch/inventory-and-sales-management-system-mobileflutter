@@ -354,6 +354,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                       builder: (_) => ProductDetailsPage(
                         product: product,
                         onAddToCart: () => addToCart(product),
+                        onOpenCart: () => setState(() => selectedIndex = 1),
                       ),
                     ),
                   );
