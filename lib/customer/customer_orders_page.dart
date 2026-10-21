@@ -1,66 +1,101 @@
 
 import 'package:flutter/material.dart';
 
-import '../data/store_data.dart';
 import '../models/sale_transaction.dart';
+import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 
-class CustomerOrdersPage extends StatelessWidget {
+class CustomerOrdersPage extends StatefulWidget {
   const CustomerOrdersPage({super.key});
 
   @override
+  State<CustomerOrdersPage> createState() => _CustomerOrdersPageState();
+}
+
+class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
+  late Future<List<SaleTransaction>> _ordersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _ordersFuture = _loadOrders();
+  }
+
+  Future<List<SaleTransaction>> _loadOrders() async {
+    final sales = await ApiService.fetchSales();
+    return sales
+        .map((sale) => SaleTransaction.fromJson(Map<String, dynamic>.from(sale as Map)))
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: StoreData.instance,
-      builder: (context, _) {
-        final transactions = StoreData.instance.transactions;
+    return Scaffold(
+      backgroundColor: AppTheme.navy,
+      appBar: AppBar(
+        title: const Text('My Orders'),
+        backgroundColor: AppTheme.navy,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back to Home',
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: FutureBuilder<List<SaleTransaction>>(
+        future: _ordersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-        return Scaffold(
-          backgroundColor: AppTheme.navy,
-
-          appBar: AppBar(
-            title: const Text('My Orders'),
-            backgroundColor: AppTheme.navy,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              tooltip: 'Back to Home',
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ),
-
-          body: transactions.isEmpty
-              ? const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 65,
-                    color: AppTheme.emerald,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'No Orders Yet',
-                    style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Your recorded purchases will appear here.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.muted),
-                  ),
-                ],
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('Unable to load your orders: ${snapshot.error}'),
               ),
-            ),
-          )
-              : ListView(
+            );
+          }
+
+          final transactions = snapshot.data ?? const <SaleTransaction>[];
+
+          if (transactions.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 65,
+                      color: AppTheme.emerald,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'No Orders Yet',
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Your recorded purchases will appear here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppTheme.muted),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Container(
@@ -94,13 +129,11 @@ class CustomerOrdersPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              ...transactions.map(
-                    (sale) => _OrderCard(sale: sale),
-              ),
+              ...transactions.map((sale) => _OrderCard(sale: sale)),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

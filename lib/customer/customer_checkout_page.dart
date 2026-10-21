@@ -1,16 +1,18 @@
 
 import 'package:flutter/material.dart';
 
-import '../data/store_data.dart';
 import '../models/product.dart';
+import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 
 class CustomerCheckoutPage extends StatefulWidget {
   final Map<String, int> quantities;
+  final List<Product> products;
 
   const CustomerCheckoutPage({
     super.key,
     required this.quantities,
+    required this.products,
   });
 
   @override
@@ -27,8 +29,7 @@ class _CustomerCheckoutPageState
     double total = 0;
 
     for (final entry in widget.quantities.entries) {
-      final matches = StoreData.instance.products
-          .where((p) => p.id == entry.key);
+      final matches = widget.products.where((p) => p.id == entry.key);
 
       if (matches.isNotEmpty) {
         total += matches.first.price * entry.value;
@@ -46,164 +47,145 @@ class _CustomerCheckoutPageState
         title: const Text('Checkout'),
         backgroundColor: AppTheme.navy,
       ),
-      body: AnimatedBuilder(
-        animation: StoreData.instance,
-        builder: (context, _) {
-          final store = StoreData.instance;
-
-          return ListView(
-            padding: const EdgeInsets.all(18),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(18),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.card,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.shopping_bag_outlined,
+                  color: AppTheme.emerald,
+                  size: 35,
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      color: AppTheme.emerald,
-                      size: 35,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Review Your Order',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Check the products and quantities before confirming.',
-                      style: TextStyle(color: AppTheme.muted),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              ...widget.quantities.entries.map((entry) {
-                final matches = store.products
-                    .where((p) => p.id == entry.key);
-
-                if (matches.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                final Product product = matches.first;
-                final quantity = entry.value;
-
-                return Card(
-                  color: AppTheme.card,
-                  child: ListTile(
-                    leading: Text(
-                      product.emoji,
-                      style: const TextStyle(fontSize: 30),
-                    ),
-                    title: Text(product.name),
-                    subtitle: Text(
-                      '$quantity × ₱${product.price.toStringAsFixed(2)}',
-                    ),
-                    trailing: Text(
-                      '₱${(product.price * quantity).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppTheme.emerald,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                SizedBox(height: 12),
+                Text(
+                  'Review Your Order',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              }),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'Check the products and quantities before confirming.',
+                  style: TextStyle(color: AppTheme.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          ...widget.quantities.entries.map((entry) {
+            final matches = widget.products.where((p) => p.id == entry.key);
 
-              const SizedBox(height: 20),
-              const Text(
-                'Payment Method',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            if (matches.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final Product product = matches.first;
+            final quantity = entry.value;
+
+            return Card(
+              color: AppTheme.card,
+              child: ListTile(
+                leading: Text(
+                  product.emoji,
+                  style: const TextStyle(fontSize: 30),
+                ),
+                title: Text(product.name),
+                subtitle: Text(
+                  '$quantity × ₱${product.price.toStringAsFixed(2)}',
+                ),
+                trailing: Text(
+                  '₱${(product.price * quantity).toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: AppTheme.emerald,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-
-              _paymentOption(
-                title: 'Cash',
-                subtitle: 'Pay with cash',
-                icon: Icons.payments_outlined,
-              ),
-              const SizedBox(height: 8),
-
-              _paymentOption(
-                title: 'GCash',
-                subtitle: 'Record GCash as the selected method',
-                icon: Icons.phone_android,
-              ),
-
-              const SizedBox(height: 20),
-
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(18),
+            );
+          }),
+          const SizedBox(height: 20),
+          const Text(
+            'Payment Method',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _paymentOption(
+            title: 'Cash',
+            subtitle: 'Pay with cash',
+            icon: Icons.payments_outlined,
+          ),
+          const SizedBox(height: 8),
+          _paymentOption(
+            title: 'GCash',
+            subtitle: 'Record GCash as the selected method',
+            icon: Icons.phone_android,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.card,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Total Amount',
+                  style: TextStyle(color: AppTheme.muted),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Total Amount',
-                      style: TextStyle(color: AppTheme.muted),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '₱${orderTotal.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppTheme.emerald,
-                        fontSize: 29,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed:
+                const SizedBox(height: 8),
+                Text(
+                  '₱${orderTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: AppTheme.emerald,
+                    fontSize: 29,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed:
                         processing || widget.quantities.isEmpty
                             ? null
                             : _completeOrder,
-                        icon: processing
-                            ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                            : const Icon(
-                          Icons.check_circle_outline,
-                        ),
-                        label: Text(
-                          processing
-                              ? 'Processing...'
-                              : 'Confirm Order',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.emerald,
-                          foregroundColor: AppTheme.navy,
-                          padding: const EdgeInsets.all(16),
-                        ),
-                      ),
+                    icon: processing
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.check_circle_outline),
+                    label: Text(
+                      processing ? 'Processing...' : 'Confirm Order',
                     ),
-                  ],
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.emerald,
+                      foregroundColor: AppTheme.navy,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -283,9 +265,23 @@ class _CustomerCheckoutPageState
     final selectedPayment = paymentMethod;
 
     try {
-      await StoreData.instance.completeSale(
-        quantities: Map<String, int>.from(widget.quantities),
+      final items = widget.quantities.entries.map((entry) {
+        final product = widget.products.firstWhere(
+          (item) => item.id == entry.key,
+          orElse: () => widget.products.first,
+        );
+
+        return {
+          'product_id': int.tryParse(product.id) ?? product.id,
+          'quantity': entry.value,
+          'price': product.price,
+        };
+      }).toList();
+
+      await ApiService.createSale(
+        items: items,
         paymentMethod: selectedPayment,
+        amountPaid: totalBeforeSale,
       );
 
       if (!mounted) return;
