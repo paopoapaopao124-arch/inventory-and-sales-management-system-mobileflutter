@@ -1,10 +1,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../customer/customer_dashboard.dart';
 import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 import '../shared/widgets.dart';
-import 'role_selection_page.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const RoleSelectionPage(),
+          builder: (_) => const CustomerDashboard(),
         ),
       );
     } catch (error) {
@@ -156,8 +157,35 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: login,
                 ),
                 const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text(
+                      'Create Account',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.card,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 const Text(
-                  'Smarter Inventory. Better Sales.',
+                  'Customer Access Only',
                   style: TextStyle(color: AppTheme.muted),
                 ),
               ],

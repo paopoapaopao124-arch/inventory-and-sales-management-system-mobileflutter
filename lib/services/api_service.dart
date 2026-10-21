@@ -75,6 +75,38 @@ class ApiService {
     throw Exception(message);
   }
 
+  static Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/register'),
+      headers: _headers(includeSession: false),
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+
+    _storeSessionCookies(response);
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return body as Map<String, dynamic>;
+    }
+
+    final message = body is Map && body.containsKey('message')
+        ? body['message']
+        : 'Registration failed.';
+
+    throw Exception(message);
+  }
+
   static Future<List<Product>> fetchProducts() async {
     final response = await http.get(
       Uri.parse('$_baseUrl/products'),
