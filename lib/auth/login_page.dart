@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../customer/customer_dashboard.dart';
 import '../services/api_service.dart';
 import '../shared/app_theme.dart';
@@ -140,6 +141,72 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _showConnectionSettingsDialog() async {
+    final controller = TextEditingController(text: AppConfig.baseUrl);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.card,
+          title: const Text(
+            'Backend Connection',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Set the Laravel backend URL before logging in.',
+                style: TextStyle(color: AppTheme.muted),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'API Base URL',
+                  hintText: 'http://192.168.1.25:8000',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || result != true) {
+      return;
+    }
+
+    final newUrl = controller.text.trim();
+    if (newUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API URL cannot be empty.')),
+      );
+      return;
+    }
+
+    await AppConfig.setBaseUrl(newUrl);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Backend URL updated to ${AppConfig.baseUrl}'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,6 +297,15 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _showConnectionSettingsDialog,
+                    icon: const Icon(Icons.wifi_tethering),
+                    label: const Text('Set Backend URL'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
                   height: 50,
                   child: FilledButton.icon(
                     onPressed: () {
@@ -255,6 +331,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                Text(
+                  'Current backend: ${AppConfig.baseUrl}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppTheme.muted),
+                ),
+                const SizedBox(height: 8),
                 const Text(
                   'Customer Access Only',
                   style: TextStyle(color: AppTheme.muted),
