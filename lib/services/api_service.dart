@@ -6,7 +6,7 @@ import '../config/app_config.dart';
 import '../models/product.dart';
 
 class ApiService {
-  static const String _baseUrl = AppConfig.apiBaseUrl;
+  static String get _baseUrl => AppConfig.apiBaseUrl;
   static final Map<String, String> _sessionCookies = {};
 
   static void _storeSessionCookies(http.Response response) {

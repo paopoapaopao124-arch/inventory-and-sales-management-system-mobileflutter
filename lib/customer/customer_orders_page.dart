@@ -28,6 +28,13 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         .toList();
   }
 
+  Future<void> _refreshOrders() async {
+    setState(() {
+      _ordersFuture = _loadOrders();
+    });
+    await _ordersFuture;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,96 +44,99 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
         backgroundColor: AppTheme.navy,
         automaticallyImplyLeading: false,
       ),
-      body: FutureBuilder<List<SaleTransaction>>(
-        future: _ordersFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: _refreshOrders,
+        child: FutureBuilder<List<SaleTransaction>>(
+          future: _ordersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('Unable to load your orders: ${snapshot.error}'),
-              ),
-            );
-          }
-
-          final transactions = snapshot.data ?? const <SaleTransaction>[];
-
-          if (transactions.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.receipt_long_outlined,
-                      size: 65,
-                      color: AppTheme.emerald,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'No Orders Yet',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Your recorded purchases will appear here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.muted),
-                    ),
-                  ],
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text('Unable to load your orders: ${snapshot.error}'),
                 ),
-              ),
-            );
-          }
+              );
+            }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF087B64),
-                      AppTheme.emerald,
+            final transactions = snapshot.data ?? const <SaleTransaction>[];
+
+            if (transactions.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 65,
+                        color: AppTheme.emerald,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'No Orders Yet',
+                        style: TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Your recorded purchases will appear here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.muted),
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Recorded Purchases',
-                      style: TextStyle(color: Colors.white),
+              );
+            }
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF087B64),
+                        AppTheme.emerald,
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${transactions.length} transaction(s)',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Recorded Purchases',
+                        style: TextStyle(color: Colors.white),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        '${transactions.length} transaction(s)',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              ...transactions.map((sale) => _OrderCard(sale: sale)),
-            ],
-          );
-        },
+                const SizedBox(height: 18),
+                ...transactions.map((sale) => _OrderCard(sale: sale)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

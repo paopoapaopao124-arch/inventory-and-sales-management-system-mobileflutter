@@ -23,6 +23,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   List<Product> _products = [];
   bool _loadingProducts = false;
   int selectedIndex = 0;
+  String _ordersTabKey = 'orders-initial';
 
   @override
   void initState() {
@@ -74,6 +75,15 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
   int get cartCount =>
       cart.values.fold(0, (sum, quantity) => sum + quantity);
+
+  void _onTabSelected(int index) {
+    setState(() {
+      selectedIndex = index;
+      if (index == 2) {
+        _ordersTabKey = 'orders-${DateTime.now().millisecondsSinceEpoch}';
+      }
+    });
+  }
 
   int addToCart(Product product) {
     if (product.stock <= 0) {
@@ -220,7 +230,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         children: [
           _buildHome(products),
           _buildCart(),
-          _buildOrdersPlaceholder(),
+          CustomerOrdersPage(key: ValueKey(_ordersTabKey)),
           _buildProfilePage(),
         ],
       ),
@@ -228,7 +238,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         backgroundColor: const Color(0xFF0C2940),
         indicatorColor: AppTheme.emerald.withValues(alpha: 0.18),
         selectedIndex: selectedIndex,
-        onDestinationSelected: (index) => setState(() => selectedIndex = index),
+        onDestinationSelected: _onTabSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -559,6 +569,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                             setState(() {
                               cart.clear();
                               selectedIndex = 2;
+                              _ordersTabKey = 'orders-${DateTime.now().millisecondsSinceEpoch}';
                             });
                           }
                         },
@@ -571,10 +582,6 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
         ),
       ],
     );
-  }
-
-  Widget _buildOrdersPlaceholder() {
-    return const CustomerOrdersPage();
   }
 
   Widget _buildProfilePage() {

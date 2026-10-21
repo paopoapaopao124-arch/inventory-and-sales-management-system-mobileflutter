@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_config.dart';
 import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 
@@ -330,6 +331,66 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     );
   }
 
+  Future<void> _showConnectionSettingsDialog() async {
+    final controller = TextEditingController(text: AppConfig.baseUrl);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.card,
+          title: const Text(
+            'Backend Connection',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Set the Laravel backend URL for this device.',
+                style: TextStyle(color: AppTheme.muted),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'API Base URL',
+                  hintText: 'http://192.168.1.25:8000',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) {
+      return;
+    }
+
+    final newUrl = controller.text.trim();
+    if (newUrl.isEmpty) {
+      _showSnackBarMessage('API URL cannot be empty.');
+      return;
+    }
+
+    await AppConfig.setBaseUrl(newUrl);
+
+    if (!mounted) return;
+
+    _showSnackBarMessage('Backend URL updated to ${AppConfig.baseUrl}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -442,6 +503,36 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                   onPressed: _showPasswordDialog,
                   icon: const Icon(Icons.lock_reset),
                   label: const Text('Change Password'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _showConnectionSettingsDialog,
+                  icon: const Icon(Icons.wifi_tethering),
+                  label: const Text('Backend Connection'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.navy,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline, color: AppTheme.emerald),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Current backend: ${AppConfig.baseUrl}',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

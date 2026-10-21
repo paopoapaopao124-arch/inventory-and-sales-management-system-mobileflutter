@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'config/app_config.dart';
 import 'shared/app_theme.dart';
 import 'auth/login_page.dart';
 import 'data/store_data.dart';
@@ -9,6 +10,7 @@ import 'data/user_data.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await AppConfig.load();
   await StoreData.instance.load();
   await UserData.instance.load();
 
