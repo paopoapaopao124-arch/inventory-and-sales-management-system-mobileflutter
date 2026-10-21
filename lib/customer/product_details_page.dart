@@ -5,10 +5,12 @@ import '../shared/app_theme.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
+  final VoidCallback onAddToCart;
 
   const ProductDetailsPage({
     super.key,
     required this.product,
+    required this.onAddToCart,
   });
 
   @override
@@ -105,6 +107,23 @@ class ProductDetailsPage extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  onAddToCart();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${product.name} added to cart.'),
+                      duration: const Duration(milliseconds: 900),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Add to Cart'),
               ),
             ),
             const SizedBox(height: 20),

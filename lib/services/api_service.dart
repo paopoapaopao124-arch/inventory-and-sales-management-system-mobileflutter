@@ -133,6 +133,36 @@ class ApiService {
     throw Exception('Unable to load profile details.');
   }
 
+  static Future<Map<String, dynamic>> updateCustomerProfile({
+    required String name,
+    required String phone,
+    required String barangay,
+    required String streetNo,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/profile'),
+      headers: _headers(),
+      body: jsonEncode({
+        'name': name,
+        'phone': phone,
+        'barangay': barangay,
+        'street_no': streetNo,
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    }
+
+    final message = body is Map && body.containsKey('message')
+        ? body['message']
+        : 'Unable to update profile.';
+
+    throw Exception(message);
+  }
+
   static Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,

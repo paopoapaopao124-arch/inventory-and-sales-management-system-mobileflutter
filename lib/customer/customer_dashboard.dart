@@ -351,7 +351,10 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ProductDetailsPage(product: product),
+                      builder: (_) => ProductDetailsPage(
+                        product: product,
+                        onAddToCart: () => addToCart(product),
+                      ),
                     ),
                   );
                 },

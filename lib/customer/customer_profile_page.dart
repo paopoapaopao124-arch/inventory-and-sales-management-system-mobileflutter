@@ -16,6 +16,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   final TextEditingController _currentPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _barangayController = TextEditingController();
+  final TextEditingController _streetNoController = TextEditingController();
 
   @override
   void initState() {
@@ -30,35 +34,75 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     await _profileFuture;
   }
 
+  void _showSnackBarMessage(String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final barangay = _barangayController.text.trim();
+    final streetNo = _streetNoController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty || barangay.isEmpty || streetNo.isEmpty) {
+      _showSnackBarMessage('Please complete all profile fields.');
+      return;
+    }
+
+    try {
+      await ApiService.updateCustomerProfile(
+        name: name,
+        phone: phone,
+        barangay: barangay,
+        streetNo: streetNo,
+      );
+
+      if (!mounted) return;
+
+      navigator.pop();
+      await _refreshProfile();
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
+  }
+
   Future<void> _changePassword() async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final currentPassword = _currentPasswordController.text.trim();
     final newPassword = _newPasswordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all password fields.'),
-        ),
-      );
+      _showSnackBarMessage('Please fill in all password fields.');
       return;
     }
 
     if (newPassword.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New password must be at least 8 characters long.'),
-        ),
-      );
+      _showSnackBarMessage('New password must be at least 8 characters long.');
       return;
     }
 
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New password and confirmation do not match.'),
-        ),
-      );
+      _showSnackBarMessage('New password and confirmation do not match.');
       return;
     }
 
@@ -71,8 +115,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
       if (!mounted) return;
 
-      if (context.mounted) {
-        Navigator.of(context).pop();
+      if (navigator.mounted) {
+        navigator.pop();
       }
 
       _currentPasswordController.clear();
@@ -82,7 +126,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         const SnackBar(
           content: Text('Password updated successfully.'),
         ),
@@ -90,12 +134,85 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
         ),
       );
     }
+  }
+
+  void _showProfileEditor() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final futureData = _profileFuture;
+
+        return FutureBuilder<Map<String, dynamic>>(
+          future: futureData,
+          builder: (context, snapshot) {
+            final profile = snapshot.data ?? <String, dynamic>{};
+            _nameController.text = (profile['name'] ?? '').toString();
+            _phoneController.text = (profile['phone'] ?? '').toString();
+            _barangayController.text = (profile['barangay'] ?? '').toString();
+            _streetNoController.text = (profile['street_no'] ?? '').toString();
+
+            return AlertDialog(
+              backgroundColor: AppTheme.card,
+              title: const Text(
+                'Edit Account Information',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Full Name',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _barangayController,
+                      decoration: const InputDecoration(
+                        labelText: 'Barangay',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _streetNoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Street No./House No.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: _saveProfile,
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showPasswordDialog() {
@@ -253,6 +370,15 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
+                  onPressed: _showProfileEditor,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit Account Information'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
                   onPressed: _showPasswordDialog,
                   icon: const Icon(Icons.lock_reset),
                   label: const Text('Change Password'),
@@ -270,6 +396,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _barangayController.dispose();
+    _streetNoController.dispose();
     super.dispose();
   }
 }
