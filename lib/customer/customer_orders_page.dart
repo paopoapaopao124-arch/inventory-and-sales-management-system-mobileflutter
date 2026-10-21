@@ -35,13 +35,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       appBar: AppBar(
         title: const Text('My Orders'),
         backgroundColor: AppTheme.navy,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back to Home',
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: FutureBuilder<List<SaleTransaction>>(
         future: _ordersFuture,

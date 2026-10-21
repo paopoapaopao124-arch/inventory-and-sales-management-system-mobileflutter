@@ -115,6 +115,52 @@ class ApiService {
     throw Exception(message);
   }
 
+  static Future<Map<String, dynamic>> fetchCustomerProfile() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/me'),
+      headers: _headers(),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Unable to fetch your profile.');
+    }
+
+    final body = jsonDecode(response.body);
+    if (body is Map && body.containsKey('user') && body['user'] is Map) {
+      return Map<String, dynamic>.from(body['user'] as Map);
+    }
+
+    throw Exception('Unable to load profile details.');
+  }
+
+  static Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/change-password'),
+      headers: _headers(),
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': confirmPassword,
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    }
+
+    final message = body is Map && body.containsKey('message')
+        ? body['message']
+        : 'Unable to update password.';
+
+    throw Exception(message);
+  }
+
   static Future<List<Product>> fetchProducts() async {
     final response = await http.get(
       Uri.parse('$_baseUrl/products'),

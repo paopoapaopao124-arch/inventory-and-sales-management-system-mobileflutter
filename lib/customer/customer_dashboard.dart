@@ -7,6 +7,8 @@ import '../services/api_service.dart';
 import '../shared/app_theme.dart';
 import 'customer_checkout_page.dart';
 import 'customer_orders_page.dart';
+import 'customer_profile_page.dart';
+import 'product_details_page.dart';
 
 class CustomerDashboard extends StatefulWidget {
   const CustomerDashboard({super.key});
@@ -217,6 +219,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
           _buildHome(products),
           _buildCart(),
           _buildOrdersPlaceholder(),
+          _buildProfilePage(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -239,6 +242,11 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'My Orders',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
@@ -338,58 +346,86 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
               final product = products[index];
               final quantity = cart[product.id] ?? 0;
 
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppTheme.emerald.withValues(alpha: 0.15),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductDetailsPage(product: product),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.card,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: AppTheme.emerald.withValues(alpha: 0.15),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          product.emoji,
-                          style: const TextStyle(fontSize: 48),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: product.imageUrl.isNotEmpty
+                              ? Image.network(
+                                  product.imageUrl,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Text(
+                                        product.emoji,
+                                        style: const TextStyle(fontSize: 48),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Center(
+                                  child: Text(
+                                    product.emoji,
+                                    style: const TextStyle(fontSize: 48),
+                                  ),
+                                ),
                         ),
                       ),
-                    ),
-                    Text(
-                      product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '₱${product.price.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppTheme.emerald,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
+                      const SizedBox(height: 10),
+                      Text(
+                        product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: product.stock <= quantity
-                            ? null
-                            : () => addToCart(product),
-                        child: Text(
-                          product.stock == 0
-                              ? 'Out of Stock'
-                              : quantity > 0
-                                  ? 'Added ($quantity)'
-                                  : 'Add to Cart',
+                      const SizedBox(height: 5),
+                      Text(
+                        '₱${product.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: AppTheme.emerald,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: product.stock <= quantity
+                              ? null
+                              : () => addToCart(product),
+                          child: Text(
+                            product.stock == 0
+                                ? 'Out of Stock'
+                                : quantity > 0
+                                    ? 'Added ($quantity)'
+                                    : 'Add to Cart',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -532,6 +568,10 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
 
   Widget _buildOrdersPlaceholder() {
     return const CustomerOrdersPage();
+  }
+
+  Widget _buildProfilePage() {
+    return const CustomerProfilePage();
   }
 }
 
