@@ -15,15 +15,45 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final municipalityController = TextEditingController(text: 'Trinidad');
+  final streetNoController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  String selectedBarangay = 'Poblacion (Center)';
   bool hidePassword = true;
   bool hideConfirmPassword = true;
+
+  static const List<String> barangays = [
+    'Banlasan',
+    'Bongbong',
+    'Catoogan',
+    'Guinobatan',
+    'Hinlayagan Ilaud',
+    'Hinlayagan Sur',
+    'Ipil',
+    'Kinan-oan',
+    'La Union',
+    'La Victoria',
+    'Mabuhay Cabigohan',
+    'Mahagbu',
+    'Manuel M. Roxas',
+    'Poblacion (Center)',
+    'San Isidro',
+    'San Vicente',
+    'Santo Tomas',
+    'Soom',
+    'Tagum Norte',
+    'Tagum Sur',
+  ];
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
+    phoneController.dispose();
+    municipalityController.dispose();
+    streetNoController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -32,10 +62,12 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
+    final phone = phoneController.text.trim();
+    final streetNo = streetNoController.text.trim();
     final password = passwordController.text;
     final passwordConfirmation = confirmPasswordController.text;
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    if (name.isEmpty || email.isEmpty || phone.isEmpty || streetNo.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please complete all required fields.'),
@@ -57,6 +89,10 @@ class _RegisterPageState extends State<RegisterPage> {
       await ApiService.register(
         name: name,
         email: email,
+        phone: phone,
+        municipality: 'Trinidad',
+        barangay: selectedBarangay,
+        streetNo: streetNo,
         password: password,
         passwordConfirmation: passwordConfirmation,
       );
@@ -132,6 +168,55 @@ class _RegisterPageState extends State<RegisterPage> {
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.email_outlined),
                     hintText: 'Email Address',
+                  ),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.phone_outlined),
+                    hintText: 'Phone Number',
+                  ),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: municipalityController,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.location_city_outlined),
+                    labelText: 'Municipality',
+                  ),
+                ),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedBarangay,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.map_outlined),
+                    labelText: 'Barangay',
+                  ),
+                  items: barangays
+                      .map(
+                        (barangay) => DropdownMenuItem(
+                          value: barangay,
+                          child: Text(barangay),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedBarangay = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: streetNoController,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.home_outlined),
+                    hintText: 'Street No. / House No.',
                   ),
                 ),
                 const SizedBox(height: 15),

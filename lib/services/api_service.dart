@@ -78,6 +78,10 @@ class ApiService {
   static Future<Map<String, dynamic>> register({
     required String name,
     required String email,
+    required String phone,
+    required String municipality,
+    required String barangay,
+    required String streetNo,
     required String password,
     required String passwordConfirmation,
   }) async {
@@ -87,6 +91,10 @@ class ApiService {
       body: jsonEncode({
         'name': name,
         'email': email,
+        'phone': phone,
+        'municipality': municipality,
+        'barangay': barangay,
+        'street_no': streetNo,
         'password': password,
         'password_confirmation': passwordConfirmation,
       }),
