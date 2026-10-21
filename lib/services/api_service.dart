@@ -75,6 +75,60 @@ class ApiService {
     throw Exception(message);
   }
 
+  static Future<Map<String, dynamic>> requestPasswordReset({
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/password/forgot'),
+      headers: _headers(includeSession: false),
+      body: jsonEncode({
+        'email': email,
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    }
+
+    final message = body is Map && body.containsKey('message')
+        ? body['message']
+        : 'Unable to send the reset link.';
+
+    throw Exception(message);
+  }
+
+  static Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/password/reset'),
+      headers: _headers(includeSession: false),
+      body: jsonEncode({
+        'email': email,
+        'token': token,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    }
+
+    final message = body is Map && body.containsKey('message')
+        ? body['message']
+        : 'Unable to reset the password.';
+
+    throw Exception(message);
+  }
+
   static Future<Map<String, dynamic>> register({
     required String name,
     required String email,
