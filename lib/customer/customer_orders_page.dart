@@ -64,7 +64,22 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
               );
             }
 
-            final transactions = snapshot.data ?? const <SaleTransaction>[];
+            final transactions = (snapshot.data ?? const <SaleTransaction>[])
+              ..sort((a, b) {
+                final order = <String, int>{
+                  'pending': 0,
+                  'confirmed': 1,
+                  'completed': 1,
+                  'voided': 2,
+                };
+
+                final statusComparison = (order[a.status] ?? 99).compareTo(order[b.status] ?? 99);
+                if (statusComparison != 0) {
+                  return statusComparison;
+                }
+
+                return b.date.compareTo(a.date);
+              });
 
             if (transactions.isEmpty) {
               return const Center(
@@ -207,6 +222,10 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
           const Divider(color: Colors.white12),
+          _detailRow('Status', _statusText(sale.status)),
+          const SizedBox(height: 8),
+          _detailRow('Processed By', sale.processedBy.isNotEmpty ? sale.processedBy : 'Pending review'),
+          const SizedBox(height: 8),
           _detailRow('Payment Method', sale.paymentMethod),
           const SizedBox(height: 8),
           _detailRow(
@@ -215,23 +234,79 @@ class _OrderCard extends StatelessWidget {
             bold: true,
           ),
           const SizedBox(height: 12),
-          const Row(
+          Row(
             children: [
               Icon(
-                Icons.check_circle,
-                color: AppTheme.emerald,
+                _statusIcon(sale.status),
+                color: _statusColor(sale.status),
                 size: 18,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'Recorded in this app',
-                style: TextStyle(color: AppTheme.emerald),
+                _statusMessage(sale.status),
+                style: TextStyle(color: _statusColor(sale.status)),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _statusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'voided':
+        return 'Voided';
+      case 'confirmed':
+      case 'completed':
+        return 'Confirmed';
+      default:
+        return 'Pending';
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Icons.pending_actions;
+      case 'voided':
+        return Icons.cancel_outlined;
+      case 'confirmed':
+      case 'completed':
+        return Icons.check_circle;
+      default:
+        return Icons.pending_actions;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return const Color(0xFFFFB300);
+      case 'voided':
+        return const Color(0xFFE53935);
+      case 'confirmed':
+      case 'completed':
+        return AppTheme.emerald;
+      default:
+        return AppTheme.emerald;
+    }
+  }
+
+  String _statusMessage(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Waiting for confirmation';
+      case 'voided':
+        return 'Order was voided';
+      case 'confirmed':
+      case 'completed':
+        return 'Confirmed by staff';
+      default:
+        return 'Waiting for confirmation';
+    }
   }
 
   Widget _detailRow(

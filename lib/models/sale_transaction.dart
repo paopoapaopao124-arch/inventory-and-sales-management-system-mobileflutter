@@ -36,6 +36,8 @@ class SaleTransaction {
   final List<SaleItem> items;
   final double total;
   final String paymentMethod;
+  final String status;
+  final String processedBy;
 
   final double discountAmount;
   final String discountType;
@@ -49,6 +51,8 @@ class SaleTransaction {
     required this.items,
     required this.total,
     required this.paymentMethod,
+    this.status = 'pending',
+    this.processedBy = 'Pending review',
     this.discountAmount = 0,
     this.discountType = 'None',
     this.isVoided = false,
@@ -63,6 +67,8 @@ class SaleTransaction {
     bool? isVoided,
     DateTime? voidedAt,
     String? voidReason,
+    String? status,
+    String? processedBy,
   }) {
     return SaleTransaction(
       id: id,
@@ -70,6 +76,8 @@ class SaleTransaction {
       items: items,
       total: total,
       paymentMethod: paymentMethod,
+      status: status ?? this.status,
+      processedBy: processedBy ?? this.processedBy,
       discountAmount: discountAmount,
       discountType: discountType,
       isVoided: isVoided ?? this.isVoided,
@@ -84,6 +92,8 @@ class SaleTransaction {
     'items': items.map((item) => item.toJson()).toList(),
     'total': total,
     'paymentMethod': paymentMethod,
+    'status': status,
+    'processedBy': processedBy,
     'discountAmount': discountAmount,
     'discountType': discountType,
     'isVoided': isVoided,
@@ -92,6 +102,9 @@ class SaleTransaction {
   };
 
   factory SaleTransaction.fromJson(Map<String, dynamic> json) {
+    final rawStatus = (json['status'] as String? ?? 'pending').toLowerCase();
+    final bool isVoided = json['isVoided'] as bool? ?? (rawStatus == 'voided');
+
     return SaleTransaction(
       id: json['id'] as String,
       date: DateTime.parse(json['date'] as String),
@@ -102,9 +115,11 @@ class SaleTransaction {
           .toList(),
       total: (json['total'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] as String,
+      status: rawStatus,
+      processedBy: json['processedBy'] as String? ?? 'Pending review',
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
       discountType: json['discountType'] as String? ?? 'None',
-      isVoided: json['isVoided'] as bool? ?? false,
+      isVoided: isVoided,
       voidedAt: json['voidedAt'] == null
           ? null
           : DateTime.parse(json['voidedAt'] as String),
