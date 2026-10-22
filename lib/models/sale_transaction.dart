@@ -103,7 +103,8 @@ class SaleTransaction {
 
   factory SaleTransaction.fromJson(Map<String, dynamic> json) {
     final rawStatus = (json['status'] as String? ?? 'pending').toLowerCase();
-    final bool isVoided = json['isVoided'] as bool? ?? (rawStatus == 'voided');
+    final normalizedStatus = rawStatus == 'completed' ? 'confirmed' : rawStatus;
+    final bool isVoided = json['isVoided'] as bool? ?? (normalizedStatus == 'voided');
 
     return SaleTransaction(
       id: json['id'] as String,
@@ -115,8 +116,10 @@ class SaleTransaction {
           .toList(),
       total: (json['total'] as num).toDouble(),
       paymentMethod: json['paymentMethod'] as String,
-      status: rawStatus,
-      processedBy: json['processedBy'] as String? ?? 'Pending review',
+      status: normalizedStatus,
+      processedBy: (json['processedBy'] as String?) ?? (
+        normalizedStatus == 'pending' ? 'Pending review' : 'Staff review'
+      ),
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
       discountType: json['discountType'] as String? ?? 'None',
       isVoided: isVoided,

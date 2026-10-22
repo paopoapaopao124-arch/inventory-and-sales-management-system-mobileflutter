@@ -14,6 +14,7 @@ class CustomerOrdersPage extends StatefulWidget {
 
 class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
   late Future<List<SaleTransaction>> _ordersFuture;
+  String _selectedFilter = 'all';
 
   @override
   void initState() {
@@ -33,6 +34,78 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       _ordersFuture = _loadOrders();
     });
     await _ordersFuture;
+  }
+
+  List<SaleTransaction> _filterTransactions(List<SaleTransaction> transactions) {
+    final filtered = <SaleTransaction>[];
+
+    for (final transaction in transactions) {
+      final normalizedStatus = transaction.status == 'completed'
+          ? 'confirmed'
+          : transaction.status;
+
+      switch (_selectedFilter) {
+        case 'pending':
+          if (normalizedStatus == 'pending') {
+            filtered.add(transaction);
+          }
+          break;
+        case 'confirmed':
+          if (normalizedStatus == 'confirmed') {
+            filtered.add(transaction);
+          }
+          break;
+        case 'voided':
+          if (normalizedStatus == 'voided') {
+            filtered.add(transaction);
+          }
+          break;
+        case 'all':
+        default:
+          filtered.add(transaction);
+          break;
+      }
+    }
+
+    filtered.sort((a, b) {
+      final normalizedA = a.status == 'completed' ? 'confirmed' : a.status;
+      final normalizedB = b.status == 'completed' ? 'confirmed' : b.status;
+      final order = <String, int>{
+        'pending': 0,
+        'confirmed': 1,
+        'voided': 2,
+      };
+
+      final statusComparison = (order[normalizedA] ?? 99).compareTo(order[normalizedB] ?? 99);
+      if (statusComparison != 0) {
+        return statusComparison;
+      }
+
+      return b.date.compareTo(a.date);
+    });
+
+    return filtered;
+  }
+
+  final List<Map<String, String>> _statusFilters = const [
+    {'label': 'All', 'value': 'all'},
+    {'label': 'Pending', 'value': 'pending'},
+    {'label': 'Confirmed', 'value': 'confirmed'},
+    {'label': 'Void', 'value': 'voided'},
+  ];
+
+  String _tabLabel(String value) {
+    switch (value) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'voided':
+        return 'Void';
+      case 'all':
+      default:
+        return 'All';
+    }
   }
 
   @override
@@ -64,48 +137,41 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
               );
             }
 
-            final transactions = (snapshot.data ?? const <SaleTransaction>[])
-              ..sort((a, b) {
-                final order = <String, int>{
-                  'pending': 0,
-                  'confirmed': 1,
-                  'completed': 1,
-                  'voided': 2,
-                };
+            final transactions = _filterTransactions(snapshot.data ?? const <SaleTransaction>[]);
 
-                final statusComparison = (order[a.status] ?? 99).compareTo(order[b.status] ?? 99);
-                if (statusComparison != 0) {
-                  return statusComparison;
-                }
-
-                return b.date.compareTo(a.date);
-              });
+            if (snapshot.data == null) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
             if (transactions.isEmpty) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.receipt_long_outlined,
                         size: 65,
                         color: AppTheme.emerald,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
-                        'No Orders Yet',
-                        style: TextStyle(
+                        _selectedFilter == 'all' ? 'No Orders Yet' : 'No ${_tabLabel(_selectedFilter)} Orders',
+                        style: const TextStyle(
                           fontSize: 23,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        'Your recorded purchases will appear here.',
+                        _selectedFilter == 'all'
+                            ? 'Your recorded purchases will appear here.'
+                            : 'There are no ${_tabLabel(_selectedFilter).toLowerCase()} orders at the moment.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppTheme.muted),
+                        style: const TextStyle(color: AppTheme.muted),
                       ),
                     ],
                   ),
@@ -144,6 +210,38 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _statusFilters.map((filter) {
+                      final isSelected = _selectedFilter == filter['value'];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedFilter = filter['value'] as String),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.emerald : AppTheme.card,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: isSelected ? AppTheme.emerald : Colors.white12,
+                              ),
+                            ),
+                            child: Text(
+                              filter['label'] as String,
+                              style: TextStyle(
+                                color: isSelected ? AppTheme.navy : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
                 const SizedBox(height: 18),
