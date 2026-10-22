@@ -145,39 +145,37 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
               );
             }
 
-            if (transactions.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.receipt_long_outlined,
-                        size: 65,
-                        color: AppTheme.emerald,
+            final emptyState = Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 65,
+                      color: AppTheme.emerald,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _selectedFilter == 'all' ? 'No Orders Yet' : 'No ${_tabLabel(_selectedFilter)} Orders',
+                      style: const TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _selectedFilter == 'all' ? 'No Orders Yet' : 'No ${_tabLabel(_selectedFilter)} Orders',
-                        style: const TextStyle(
-                          fontSize: 23,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _selectedFilter == 'all'
-                            ? 'Your recorded purchases will appear here.'
-                            : 'There are no ${_tabLabel(_selectedFilter).toLowerCase()} orders at the moment.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppTheme.muted),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _selectedFilter == 'all'
+                          ? 'Your recorded purchases will appear here.'
+                          : 'There are no ${_tabLabel(_selectedFilter).toLowerCase()} orders at the moment.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppTheme.muted),
+                    ),
+                  ],
                 ),
-              );
-            }
+              ),
+            );
 
             return ListView(
               padding: const EdgeInsets.all(16),
@@ -245,7 +243,7 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                   ),
                 ),
                 const SizedBox(height: 18),
-                ...transactions.map((sale) => _OrderCard(sale: sale)),
+                if (transactions.isEmpty) emptyState else ...transactions.map((sale) => _OrderCard(sale: sale)),
               ],
             );
           },
